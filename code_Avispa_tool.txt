@@ -1,0 +1,93 @@
+Vì Avispa tool chạy trên ubuntu nên em sẽ coppy nó qua file txt
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+role server(S,T: agent,Kts: symmetric key,H: hash_func,
+SND, RCV: channel(dy))
+played by S def=
+1ocal State: nat,
+R1,R2,ID,Ns,Trseq,ATDt,Nx,V1,Tr,Nt,V4: text,
+Auth1:hash(text.symmetric_ key. text)
+
+init State:=0
+transition
+0. State =0/\RCV(ID')
+=|> State':=1
+/\ Ns':= new()
+/\ Trseq':= new()
+/\ Kts’:=H(ID’.Ns’)
+/\ SND(Kts’.Trseq’)
+/\ witness(S,T,trseq,Trseq')
+/\ witness(S,T,kts,Kts')
+1. State = 1 /\ RCV(AIDt'.Nx'.Trseq.V1')
+  =|> State’:=2
+/\Auth1’:= H(ATDt'.Kts.Nx')
+/\ request(S,T,id3,Auth1')
+/\ Trseq':=new()
+/\ Nt’ := xor (Kts,Nx’)
+/\Tr’ := xor((Kts.ID.Nt'),Trseq’)
+/\V4':= H(Tr'.Kts.ID.Nt')
+/\ SND(Tr'.V4)
+/\ witness(S,T,trseq,Trseq')
+/\ witness(S,T,kts,Kts')
+/\ Kts’:= H(Kts.ID.Trseq')
+end roLe
+roLe tag( T,S: agent,Kts: symmetric_key,H: hash_func,
+SND,RCV: channel(dy))
+played by T def=
+1ocal State: nat,
+R1,R2,ID,Trseq,Nt,Nx,AIDt,V1,Tr,V4: text,
+Auth: hash(text.symmetric_ key. text. text)
+init State:=0
+transition
+0. State=0 /\RCV(start)
+=|> State':=1
+/\ ID':=new()
+/\ SND(TD')
+/\ secret(ID,id,{T,S})
+1.State=1/\ RCV(Kts'.Trseq')
+  =|> State’:=2
+   /\ Nt’:=new()
+  /\ Nx’:=xor(Nt’,Kts’)
+/\ AIDt’:=h(ID.Kts'.Nt'.Trseq')
+/\V1':=h(AIDt'.Kts'.Nx’)
+/\ SND(AIDt'.Nx'.Trseq'.V1’)
+/\ witness(T,S,trseq,Trseq')
+/\ witness(T,S,kts,Kts')
+2. State= 2/\ RCV(Tr'.V4')
+=|> State':=3
+/\ Auth’:= h(Tr’.Kts.ID.Nt)
+/\ request(T,S,id3,Auth')
+
+/\ Trseq’:= xor(h(Kts.ID.Nt) ,Tr’)
+/\ Kts':= h(Kts.TD.Trseq')
+/\ secret(ID.id,{T,S})
+/\secret(Trseq’,id2,{T,S})
+/\secret(Kts’,id3,{T,S})
+end role
+role session( T,S :agent,Kts: symmetric key,Hash: hash_func)
+def=
+1ocal SND,RCV: channe1(dy)
+composition
+tag (T, S,Kts,Hash, SND, RCV)
+/\ server(S,T,Kts,Hash, SND, RCV)
+end role
+role environment()
+def=
+const
+id,id2,id3,trseq: protocol_id,
+h: hash_func,
+kts,kti,ksi: symmetric_key,
+tag,server: agent
+intruder_KnowLedge={tag, server,h,i,kti,ksi}
+composition
+session(tag, server,kts,h)
+/\ session(tag,i,kti,h)
+
+/\ session(i,server,ksi,h)
+end roLe
+goaL
+secrecy of id,id2,id3
+authentication_on trseq
+authentication_on id3
+authentication_on kts
+end goal
+Environment()
